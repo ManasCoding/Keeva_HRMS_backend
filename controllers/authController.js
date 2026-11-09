@@ -28,7 +28,13 @@ export const login = async (req, res) => {
 
   try {
     if (isAdmin) {
-      const admin = await Admin.findOne({ email: loginId });
+      const trimmedLoginId = (loginId || '').trim();
+      const admin = await Admin.findOne({
+        $or: [
+          { email: trimmedLoginId.toLowerCase() },
+          { email: new RegExp(`^${trimmedLoginId}$`, 'i') }
+        ]
+      });
       if (admin && await bcrypt.compare(password, admin.password)) {
         // Check maintenance mode for admin (only bypass gumansingh.oditechglobal@gmail.com)
         const maintenanceSetting = await SystemSetting.findOne({ key: 'maintenance_mode' });
